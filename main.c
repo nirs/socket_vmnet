@@ -105,19 +105,23 @@ static void state_add_socket_fd(struct state *state, int socket_fd) {
 
 static void state_remove_socket_fd(struct state *state, int socket_fd) {
   dispatch_semaphore_wait(state->sem, DISPATCH_TIME_FOREVER);
+  struct conn *removed = NULL;
   if (state->conns != NULL) {
     if (state->conns->socket_fd == socket_fd) {
+      removed = state->conns;
       state->conns = state->conns->next;
     } else {
       struct conn *conn;
       for (conn = state->conns; conn->next != NULL; conn = conn->next) {
         if (conn->next->socket_fd == socket_fd) {
+          removed = conn->next;
           conn->next = conn->next->next;
-	  break;
+          break;
         }
       }
     }
   }
+  free(removed);
   dispatch_semaphore_signal(state->sem);
 }
 
