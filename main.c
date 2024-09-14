@@ -169,9 +169,7 @@ static void _on_vmnet_packets_available(interface_ref iface, int64_t buf_count,
            dest_mac[5], src_mac[0], src_mac[1], src_mac[2], src_mac[3],
            src_mac[4], src_mac[5]);
     dispatch_semaphore_wait(state->sem, DISPATCH_TIME_FOREVER);
-    struct conn *conns = state->conns;
-    dispatch_semaphore_signal(state->sem);
-    for (struct conn *conn = conns; conn != NULL; conn = conn->next) {
+    for (struct conn *conn = state->conns; conn != NULL; conn = conn->next) {
       // FIXME: avoid flooding
       DEBUGF("[Handler i=%d] Sending to the socket %d: 4 + %ld bytes [Dest "
              "%02X:%02X:%02X:%02X:%02X:%02X]",
@@ -197,6 +195,7 @@ static void _on_vmnet_packets_available(interface_ref iface, int64_t buf_count,
         goto done;
       }
     }
+    dispatch_semaphore_signal(state->sem);
   }
 done:
   if (pdv != NULL) {
@@ -518,9 +517,7 @@ static void on_accept(struct state *state, int accept_fd, interface_ref iface) {
     // (Not handled by vmnet)
     // FIXME: avoid flooding
     dispatch_semaphore_wait(state->sem, DISPATCH_TIME_FOREVER);
-    struct conn *conns = state->conns;
-    dispatch_semaphore_signal(state->sem);
-    for (struct conn *conn = conns; conn != NULL; conn = conn->next) {
+    for (struct conn *conn = state->conns; conn != NULL; conn = conn->next) {
       if (conn->socket_fd == accept_fd)
         continue;
       DEBUGF("[Socket-to-Socket i=%lld] Sending from socket %d to socket %d: "
@@ -545,6 +542,7 @@ static void on_accept(struct state *state, int accept_fd, interface_ref iface) {
         continue;
       }
     }
+    dispatch_semaphore_signal(state->sem);
   }
 done:
   INFOF("Closing a connection (fd %d)", accept_fd);
