@@ -65,6 +65,7 @@ endif
 
 define load_launchd
 	# Hint: try `launchctl enable system/$(1)` if the `launchctl bootstrap` command below fails
+	logger "Installing socket_vmnet version $$(git describe --tags)"
 	launchctl bootstrap system "$(DESTDIR)/Library/LaunchDaemons/$(1).plist"
 	launchctl enable system/$(1)
 	launchctl kickstart -kp system/$(1)
@@ -88,6 +89,7 @@ uninstall.doc:
 	rm -rf "$(DESTDIR)/$(PREFIX)/share/doc/socket_vmnet"
 
 define unload_launchd
+	logger "Uninstalling socket_vmnet"
 	launchctl bootout system "$(DESTDIR)/Library/LaunchDaemons/$(1).plist" || true
 endef
 
