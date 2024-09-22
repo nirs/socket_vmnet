@@ -464,8 +464,26 @@ done:
   return rc;
 }
 
+// We receive up to 200 packets and 256 KiB from vmnet on each read. Make sure
+// the socket buffers has enough room to avoid dropping packets because of
+// not enough buffer space is available.
+//
+// Errors are not criticial as this is an optimization, but we want to know if
+// this fails, so log the error.
+static void set_socket_buffers(int fd)
+{
+    size_t size = 1024 * 1024;
+
+    if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) < 0)
+        ERRORN("setsockopt(SOL_SOCKET, SO_SNDBUF)");
+
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) < 0)
+        ERRORN("setsockopt(SOL_SOCKET, SO_RCVBUF)");
+}
+
 static void on_accept(struct state *state, int accept_fd, interface_ref iface) {
   INFOF("Accepted a connection (fd %d)", accept_fd);
+  set_socket_buffers(accept_fd);
   state_add_socket_fd(state, accept_fd);
   size_t buf_len = 64 * 1024;
   void *buf = malloc(buf_len);
