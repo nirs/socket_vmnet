@@ -19,7 +19,7 @@ setup() {
 
 run() {
     server_address=$(limactl shell server ip -j -4 addr show dev lima0 | jq -r '.[0].addr_info[0].local')
-    limactl shell client iperf3 --client $server_address --no-delay --time $TIME
+    limactl shell client iperf3 --client $server_address --time $TIME
 }
 
 cleanup() {
